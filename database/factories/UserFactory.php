@@ -2,9 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
@@ -24,6 +26,7 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
+            'organization_id' => Organization::factory(),
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
@@ -40,5 +43,33 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    public function withoutOrganization(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'organization_id' => null,
+        ]);
+    }
+
+    public function owner(): static
+    {
+        return $this->afterCreating(function (\App\Models\User $user): void {
+            $user->assignRole(Role::findOrCreate('Owner'));
+        });
+    }
+
+    public function staff(): static
+    {
+        return $this->afterCreating(function (\App\Models\User $user): void {
+            $user->assignRole(Role::findOrCreate('Staff'));
+        });
+    }
+
+    public function client(): static
+    {
+        return $this->afterCreating(function (\App\Models\User $user): void {
+            $user->assignRole(Role::findOrCreate('Client'));
+        });
     }
 }

@@ -1,0 +1,17 @@
+.git
+.github
+.phpunit.result.cache
+node_modules
+vendor
+storage/logs
+storage/framework/cache
+storage/framework/sessions
+storage/framework/views
+database/database.sqlite
+.env
+.env.*
+tests
+README.md
+npm-debug.log
+yarn.lock
+yarn-error.log

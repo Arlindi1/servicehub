@@ -1,59 +1,96 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ServiceHub — Client Portal & Project Delivery Platform
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+ServiceHub is a polished client portal built with **Laravel + Inertia + Vue 3 + Vite**. It supports lightweight multi-tenancy (scoped by `organization_id`), role-based access (Owner/Staff/Client), project delivery workflows, invoices with PDF export, in-app notifications, and an activity log.
 
-## About Laravel
+## Stack
+- Laravel (session auth + email verification)
+- Inertia.js + Vue 3 + Vite
+- SQLite for local development (`database/database.sqlite`)
+- Roles/permissions: `spatie/laravel-permission`
+- Invoice PDFs: `barryvdh/laravel-dompdf`
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Install (Local)
+1) Install PHP deps: `composer install`
+2) Create env: `copy .env.example .env` (Windows) / `cp .env.example .env` (macOS/Linux)
+3) App key: `php artisan key:generate`
+4) Create SQLite file: `php -r "file_exists('database/database.sqlite') || touch('database/database.sqlite');"`
+5) Migrate + seed demo data: `php artisan migrate:fresh --seed`
+6) Install JS deps: `npm install`
+7) Start Vite: `npm run dev`
+8) Start Laravel: `php artisan serve`
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Optional shortcuts:
+- One-shot setup: `composer run setup`
+- Run server + Vite together: `composer run dev`
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Deploy to Render (Free)
+This repo includes Docker + a `render.yaml` Blueprint for Render.
 
-## Learning Laravel
+1) Create a **Postgres (Free)** database (or use the Blueprint).
+2) Create a **Web Service (Free)** with **Environment = Docker** and point it at this repo.
+3) Set env vars (Render dashboard → Environment):
+   - `APP_ENV=production`
+   - `APP_DEBUG=false`
+   - `APP_KEY=...` (generate with `php artisan key:generate --show`)
+   - `DB_CONNECTION=pgsql`
+   - `DATABASE_URL=...` (from your Render Postgres “Internal Database URL”)
+   - `APP_URL=https://<your-service>.onrender.com`
+   - `ASSET_URL=https://<your-service>.onrender.com`
+4) Set Mailgun SMTP env vars (Render blocks ports 25/465/587; use 2525):
+   - `MAIL_MAILER=smtp`
+   - `MAIL_HOST=smtp.mailgun.org`
+   - `MAIL_PORT=2525`
+   - `MAIL_USERNAME=postmaster@YOUR_DOMAIN`
+   - `MAIL_PASSWORD=YOUR_MAILGUN_SMTP_PASSWORD`
+   - `MAIL_ENCRYPTION=tls`
+   - `MAIL_FROM_ADDRESS=no-reply@YOUR_DOMAIN`
+   - `MAIL_FROM_NAME=ServiceHub`
+5) Deploy. On startup, the container runs:
+   - `composer install --no-dev`
+   - `php artisan config:cache`
+   - `php artisan route:cache`
+   - `php artisan migrate --force`
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Notes:
+- Render Free Postgres databases expire after ~30 days; free web services may sleep after inactivity.
+- Render Free has an ephemeral filesystem; uploads stored on `local` disk are not durable. Use S3/R2/etc for real production uploads.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Demo Credentials
+All demo accounts use password: `password`
 
-## Laravel Sponsors
+- **Owner**: `owner@acme.test` (full access, including `/app/activity`)
+- **Staff**: `staff1@acme.test`, `staff2@acme.test` (projects/tasks/files/comments/invoices; no team/settings/activity)
+- **Client**: `client1@acme.test`, `client2@acme.test`, `client3@acme.test` (portal-only; can comment + upload “Client Upload” files; invoices read-only)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Feature List
+- Organizations (single org per user for MVP) + org-scoped data access
+- Clients module (Owner/Staff)
+- Projects module + staff assignment + project tabs (Tasks, Files, Discussion)
+- Tasks with status + assignee + due date
+- Secure project file uploads/downloads (no public links)
+- Project discussion thread (staff/client)
+- Invoices + invoice items with server-side totals + PDF download
+- In-app notifications (comment/file/invoice sent) for Owner/Staff
+- Activity log (Owner only) with filters + pagination
 
-### Premium Partners
+## Screenshots (Placeholders)
+- Dashboard (`/app/dashboard`)
+- Project details (`/app/projects/{id}`)
+- Invoices (`/app/invoices/{id}`)
+- Client portal dashboard (`/portal/dashboard`)
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Troubleshooting (Windows)
+- **OneDrive performance**: if dev feels slow, move the repo out of OneDrive and into a local path (e.g. `C:\\dev\\ServiceHub`).
+- **SQLite file missing**: ensure `database/database.sqlite` exists and `.env` has `DB_CONNECTION=sqlite`.
+- **Port already in use**: stop the existing process or run `php artisan serve --port=8001`.
+- **Stale config**: run `php artisan config:clear` after changing `.env`.
 
-## Contributing
+## Production Email (Mailgun SMTP)
+ServiceHub uses Laravel SMTP mail in production. Configure these env vars:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- `MAIL_MAILER=smtp`
+- `MAIL_HOST=smtp.mailgun.org` (or `smtp.eu.mailgun.org`)
+- `MAIL_PORT=2525`
+- `MAIL_ENCRYPTION=tls` (or `MAIL_SCHEME=tls`)
+- `MAIL_USERNAME=postmaster@YOUR_DOMAIN`
+- `MAIL_PASSWORD=YOUR_MAILGUN_SMTP_PASSWORD`

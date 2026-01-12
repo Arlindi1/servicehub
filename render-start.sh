@@ -11,13 +11,21 @@ fi
 
 envsubst '${PORT}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf
 
-mkdir -p storage bootstrap/cache
+# ✅ Ensure Laravel writable paths exist (fixes "Please provide a valid cache path")
+mkdir -p \
+  storage/framework/cache \
+  storage/framework/sessions \
+  storage/framework/views \
+  storage/logs \
+  bootstrap/cache
+
 chmod -R ug+rwx storage bootstrap/cache
 
 composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
 
 php artisan config:cache
 php artisan route:cache
+php artisan view:cache || true
 
 attempts=0
 until php artisan migrate --force; do
@@ -32,4 +40,3 @@ until php artisan migrate --force; do
 done
 
 exec supervisord -c /etc/supervisor/conf.d/supervisord.conf
-

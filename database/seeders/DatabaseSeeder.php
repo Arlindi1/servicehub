@@ -51,6 +51,14 @@ class DatabaseSeeder extends Seeder
         $owner->forceFill(['email_verified_at' => now()])->save();
         $owner->syncRoles([$ownerRole]);
 
+        $demoUser = User::updateOrCreate(['email' => 'demo@servicehub.test'], [
+            'organization_id' => $organization->id,
+            'name' => 'Demo User',
+            'password' => Hash::make('password'),
+        ]);
+        $demoUser->forceFill(['email_verified_at' => now()])->save();
+        $demoUser->syncRoles([$ownerRole]);
+
         $staff1 = User::updateOrCreate(['email' => 'staff1@acme.test'], [
             'organization_id' => $organization->id,
             'name' => 'Sam Staff',

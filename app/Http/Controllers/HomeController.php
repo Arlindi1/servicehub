@@ -24,9 +24,9 @@ class HomeController extends Controller
         return Inertia::render('Welcome', [
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),
+            'canDemoLogin' => (bool) config('app.demo_login_enabled') && Route::has('demo.login'),
             'laravelVersion' => Application::VERSION,
             'phpVersion' => PHP_VERSION,
         ]);
     }
 }
-

@@ -18,9 +18,71 @@ use App\Http\Controllers\ProjectFileController;
 use App\Http\Controllers\Portal\DashboardController as PortalDashboardController;
 use App\Http\Controllers\Portal\InvoiceController as PortalInvoiceController;
 use App\Http\Controllers\Portal\ProjectController as PortalProjectController;
+use App\Models\Organization;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
+use Spatie\Permission\Models\Role;
 
 Route::get('/', HomeController::class);
+
+Route::middleware(['auth'])->get('/dashboard', function (Request $request) {
+    $homeRoute = $request->user()?->organization_id === null
+        ? 'onboarding.organization.create'
+        : $request->user()->homeRouteName();
+
+    return redirect()->to(route($homeRoute, absolute: false));
+})->name('dashboard');
+
+Route::get('/demo-login', function () {
+    abort_unless(config('app.demo_login_enabled'), 404);
+
+    $existingDemoUser = User::query()
+        ->where('email', 'demo@servicehub.test')
+        ->first();
+
+    $organization = $existingDemoUser?->organization
+        ?? Organization::query()->where('name', 'Acme Studio')->first()
+        ?? Organization::create([
+            'name' => 'ServiceHub Demo',
+            'brand_color' => '#0ea5e9',
+            'invoice_prefix' => 'INV',
+            'invoice_due_days_default' => 14,
+            'billing_email' => 'billing@servicehub.test',
+        ]);
+
+    $ownerRole = Role::findOrCreate('Owner');
+
+    $demoUser = User::updateOrCreate(
+        ['email' => 'demo@servicehub.test'],
+        [
+            'organization_id' => $organization->id,
+            'name' => $existingDemoUser?->name ?? 'Demo User',
+            'password' => Hash::make('password'),
+            'is_active' => true,
+        ],
+    );
+
+    if (! $demoUser->hasVerifiedEmail() || ! $demoUser->is_active || $demoUser->organization_id !== $organization->id) {
+        $demoUser->forceFill([
+            'organization_id' => $organization->id,
+            'email_verified_at' => $demoUser->email_verified_at ?? now(),
+            'is_active' => true,
+        ])->save();
+    }
+
+    $demoUser->syncRoles([$ownerRole]);
+
+    Auth::login($demoUser);
+
+    $redirectTo = Route::has('dashboard')
+        ? route('dashboard', absolute: false)
+        : '/dashboard';
+
+    return redirect()->to($redirectTo);
+})->name('demo.login');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/onboarding/organization', [OrganizationController::class, 'create'])

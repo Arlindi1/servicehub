@@ -56,6 +56,8 @@ return [
 
     'asset_url' => env('ASSET_URL'),
 
+    'demo_login_enabled' => env('DEMO_LOGIN_ENABLED', true),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
